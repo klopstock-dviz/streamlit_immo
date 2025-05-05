@@ -22,6 +22,33 @@ from dotenv import load_dotenv
 import plotly.express as px
 from plotly.subplots import make_subplots
 
+
+# Patch torch.classes pour éviter l'erreur de Streamlit
+import torch
+
+
+
+#=========corrections incompatibilités streamlit / event loop
+#=============== nécessaire pour streaming des réponses graphRAG
+# Patch the event loop to allow nested async calls
+nest_asyncio.apply()
+#==========fin
+
+#=================== Correction conflit event loops torch/streamlit
+# Save the original __getattr__ method
+original_getattr = torch._classes._Classes.__getattr__
+
+# Define a patched version to handle __path__
+def patched_getattr(self, attr):
+    if attr == "__path__":
+        # Explicitly block access to __path__
+        raise AttributeError(f"'{self.__class__.__name__}' has no attribute '__path__'")
+    return original_getattr(self, attr)
+
+# Apply the patch
+torch._classes._Classes.__getattr__ = patched_getattr
+#===============fin
+
 # Load environment variables
 load_dotenv(dotenv_path=".env", override=True)
 client = OpenAI()

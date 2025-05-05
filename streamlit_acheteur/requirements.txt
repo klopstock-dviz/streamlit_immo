@@ -1,5 +1,6 @@
 streamlit
 asyncio
+nest-asyncio
 pandas
 numpy
 scikit-learn
