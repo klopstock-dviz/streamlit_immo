@@ -376,7 +376,7 @@ def extract_structured_data(user_query):
                     """
                 }
             ],
-            model="gpt-4",
+            model="gpt-4o",
             temperature=0.1,
         )
 
@@ -423,7 +423,7 @@ def extract_structured_data(user_query):
                 'content': prompt_v1
             }
         ],
-        model="gpt-4",
+        model="gpt-4o",
         temperature=0.1,
     )
 
