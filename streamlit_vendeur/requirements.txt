@@ -4,10 +4,6 @@ nest-asyncio
 pandas
 numpy
 geopandas
-geojson
-geopy
-shapely
-folium
 scikit-learn
 transformers
 torch

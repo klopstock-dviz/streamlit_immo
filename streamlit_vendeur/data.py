@@ -11,6 +11,8 @@ import streamlit as st
 import geojson
 import folium
 from pathlib import Path
+import shutil
+
 
 # Get the directory of the current script
 SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -51,7 +53,7 @@ def calc_distance_km(point1, point2):
         
     return distance
 
-st.cache_data
+@st.cache_data
 def get_insee_stats(iris, coords_ref_point):
     def shorten_poi_label(l):
         # if l.find("École élémentaire"):
@@ -65,7 +67,7 @@ def get_insee_stats(iris, coords_ref_point):
             return l
 
     # root_path="/home/chougar/Documents/GitHub/immo_vis/immo_vis/data/"
-    insee_subPath="data/insee/base_ic/"
+    insee_subPath="https://raw.githubusercontent.com/klopstock-dviz/immo_vis/refs/heads/master/data/insee/base_ic/"
 
     code_dep=iris[:2]
     INSEE_COM=iris[:5]
@@ -139,7 +141,7 @@ def get_insee_stats(iris, coords_ref_point):
 
     }
 
-    activite_residents=pd.read_csv(SCRIPT_DIR/f"{insee_subPath}activite_residents_{code_dep}.csv", sep=";", dtype={"INSEE_COM":str,	"DEP": str, "IRIS":str})
+    activite_residents=pd.read_csv(f"{insee_subPath}activite_residents_{code_dep}.csv", sep=";", dtype={"INSEE_COM":str,	"DEP": str, "IRIS":str})
     # traitements sur activité_residents
     activite_residents["Part des actifs"]=(activite_residents["P19_ACT1564"]/activite_residents["P19_POP1564"])*100
     activite_residents['Taux de chômage']=(activite_residents["P19_CHOM1564"]/activite_residents["P19_POP1564"])*100
@@ -153,14 +155,14 @@ def get_insee_stats(iris, coords_ref_point):
     activite_residents["Part des Ouvriers"]=(activite_residents["C19_ACT1564_CS6"]/activite_residents["P19_ACT1564"])*100
 
 
-    revenus_disponibles=pd.read_csv(SCRIPT_DIR/f"{insee_subPath}revenus_disponibles_{code_dep}.csv", sep=";", dtype={"INSEE_COM":str,	"DEP": str, "IRIS":str})
+    revenus_disponibles=pd.read_csv(f"{insee_subPath}revenus_disponibles_{code_dep}.csv", sep=";", dtype={"INSEE_COM":str,	"DEP": str, "IRIS":str})
 
-    evol_struc_pop=pd.read_csv(SCRIPT_DIR/f"{insee_subPath}evol_struc_pop_{code_dep}.csv", sep=";", dtype={"INSEE_COM":str,	"DEP": str, "IRIS":str})
+    evol_struc_pop=pd.read_csv(f"{insee_subPath}evol_struc_pop_{code_dep}.csv", sep=";", dtype={"INSEE_COM":str,	"DEP": str, "IRIS":str})
     # traitements population
     evol_struc_pop["Part des moins de 30 ans"]=((evol_struc_pop["P19_POP0014"]+evol_struc_pop["P19_POP1529"])/evol_struc_pop["P19_POP"])*100
     evol_struc_pop["Part des plus de 60 ans"]=((evol_struc_pop["P19_POP75P"]+evol_struc_pop["P19_POP1529"])/evol_struc_pop["P19_POP"])*100
 
-    couples_familles_menages=pd.read_csv(SCRIPT_DIR/f"{insee_subPath}couples_familles_menages_{code_dep}.csv", sep=";", dtype={"INSEE_COM":str,	"DEP": str, "IRIS":str})
+    couples_familles_menages=pd.read_csv(f"{insee_subPath}couples_familles_menages_{code_dep}.csv", sep=";", dtype={"INSEE_COM":str,	"DEP": str, "IRIS":str})
     # traitements sur couples_familles_menages
     couples_familles_menages["Part des ménages avec 1 personne"]=(couples_familles_menages["C19_MENPSEUL"]/couples_familles_menages["C19_MEN"])*100
     couples_familles_menages["Part des ménages avec famille(s)"]=(couples_familles_menages["C19_MENFAM"]/couples_familles_menages["C19_MEN"])*100
@@ -168,7 +170,10 @@ def get_insee_stats(iris, coords_ref_point):
     couples_familles_menages["Part des mamilles Monoparentales"]=(couples_familles_menages["C19_FAMMONO"]/couples_familles_menages["C19_MEN"])*100
     couples_familles_menages["Part des mamilles sans enfant"]=(couples_familles_menages["C19_COUPSENF"]/couples_familles_menages["C19_MEN"])*100
     
-    poi=pd.read_csv(SCRIPT_DIR/f"data/poi/poi_{code_dep}.csv", sep=";", dtype={"DEPCOM":str, "DEP": str, "DCIRIS":str})
+
+    # poi=pd.read_csv(SCRIPT_DIR/f"data/poi/poi_{code_dep}.csv", sep=";", dtype={"DEPCOM":str, "DEP": str, "DCIRIS":str})
+    poi_adress="https://raw.githubusercontent.com/klopstock-dviz/immo_vis/refs/heads/master/data/poi/"
+    poi=pd.read_csv(f"{poi_adress}poi_{code_dep}.csv", sep=";", dtype={"DEPCOM":str, "DEP": str, "DCIRIS":str})
     poi_filtre=[
         "A101",
         "A104",
@@ -236,7 +241,11 @@ def get_insee_stats(iris, coords_ref_point):
     # traitements sur les poi
     poi['distance_m'] = poi.apply(lambda row: np.round(calc_distance_km(coords_ref_point, (row['lng'], row['lat'])), 1), axis=1)
     poi=poi[poi['distance_m']<1500]
-    ref_poi=pd.read_csv(SCRIPT_DIR/f"data/ref_type_equip.csv", sep=";")
+    ref_poi=pd.read_csv(
+        "https://raw.githubusercontent.com/klopstock-dviz/immo_vis/refs/heads/master/data/ref/ref_type_equip.csv", 
+        sep=";"
+    )
+    
     poi=pd.merge(left=poi, right=ref_poi, left_on="TYPEQU", right_on="type", how="inner")
 
     cols_to_drop=['INSEE_COM', "DEP", "IRIS"]       
@@ -317,10 +326,12 @@ def get_iris(coord, dep_adresse):
 
     point = Point(coord)
 
-    # iris_poly_path="/home/chougar/Documents/GitHub/immo_vis/immo_vis/data/ref/polygons/"
-    # with open(f"{iris_poly_path}polygones_{dep_adresse}.json") as f:
-    with open(SCRIPT_DIR/f"data/polygons/polygones_{dep_adresse}.json") as f:
-        iris_polygons = json.load(f)
+    
+    #with open(SCRIPT_DIR/f"data/polygons/polygones_{dep_adresse}.json") as f:
+    # with open(f"https://raw.githubusercontent.com/klopstock-dviz/immo_vis/refs/heads/master/data/ref/polygons/polygones_{dep_adresse}.json") as f:
+    #     iris_polygons = json.load(f)
+    iris_polygons=pd.read_json(f"https://raw.githubusercontent.com/klopstock-dviz/immo_vis/refs/heads/master/data/ref/polygons/polygones_{dep_adresse}.json")
+    iris_polygons=json.loads(iris_polygons.to_json())
 
     ref_iris=pd.read_csv(SCRIPT_DIR/"data/df_reference_communes_iris.csv", sep=";", dtype={"CODE_IRIS": str})
 
@@ -432,17 +443,50 @@ def build_photos_album(idannonce):
     from PIL import Image
     import matplotlib.pyplot as plt
 
-    source_dir = "/home/chougar/Documents/GitHub/image-to-text-immo/photos/"
-    for folder_name in os.listdir(source_dir):
+    # source_dir = "/home/chougar/Documents/GitHub/image-to-text-immo/photos/"
+    source_dir = "https://raw.githubusercontent.com/klopstock-dviz/image-to-text-immo/main/photos/"
+    list_dir_images = []
+
+    # Read the file list_dir_images.txt
+    file_path = SCRIPT_DIR/"list_dir_images.txt"
+    if os.path.exists(file_path):
+        with open(file_path, "r") as file:
+            list_dir_images = file.read().splitlines()
+    else:
+        print(f"File list_dir_images.txt does not exist.")
+        exit()  # Utilisez exit() au lieu de return si ce n'est pas dans une fonction
+
+    # idannonce = "12345"  # Vous devriez définir cette variable ou la passer en paramètre
+
+    for folder_name in list_dir_images:        
         if folder_name.startswith(idannonce):
             print(folder_name)
+            
+            image_files = []
+            for num_photo in range(0, 12):
+                try:
+                    # Note: J'ai changé l'URL pour utiliser raw.githubusercontent.com pour accéder aux fichiers bruts
+                    url = f"{source_dir}{folder_name}/photo_{num_photo}.jpg"
+                    req = requests.get(url, timeout=10)  # Ajout d'un timeout
+                    
+                    if req.status_code == 200:
+                        # Ensure the directory exists
+                        os.makedirs(SCRIPT_DIR/f"photos/{folder_name}", exist_ok=True)
+                        image_path = SCRIPT_DIR/f"photos/{folder_name}/photo_{num_photo}.jpg"
+                        
+                        with open(image_path, "wb") as img_file:
+                            img_file.write(req.content)
+                        image_files.append(image_path)
+                    else:
+                        print(f"Image not found: {url}")
+                        
+                except requests.exceptions.RequestException as e:
+                    print(f"Error downloading image {num_photo} for {folder_name}: {e}")
 
+    
+            
 
-            # Liste des fichiers images (supposons qu'ils sont au format JPG ou PNG)
-            image_files = [os.path.join(source_dir+folder_name, f) for f in os.listdir(source_dir+folder_name) if f.endswith(('.jpg', '.png'))][:9]
-            print(image_files)
-
-
+            image_files=image_files[:9]
             # Créer une figure Matplotlib de 3x3
             fig, axes = plt.subplots(3, 3, figsize=(10, 10))  # Ajustez la taille de la figure
 
@@ -462,9 +506,25 @@ def build_photos_album(idannonce):
 
 
             # Sauvegarder la galerie
-            fig.savefig("galerie_3x3.png", bbox_inches='tight', pad_inches=0.1, facecolor='black')
+            fig.savefig(SCRIPT_DIR/"galerie_3x3.png", bbox_inches='tight', pad_inches=0.1, facecolor='black')
+
+
+
+            def clear_photos_directory():
+                photos_dir = SCRIPT_DIR/"photos"
+                if os.path.exists(photos_dir):
+                    shutil.rmtree(photos_dir)
+                    os.makedirs(photos_dir)
+                    print("Contenu du répertoire 'photos' supprimé et répertoire recréé.")
+                else:
+                    print("Le répertoire 'photos' n'existe pas.")
+
+            clear_photos_directory()
 
             return
+
+    
+
 def build_ad_description_input(adresse_du_bien, type_bien, type_transaction, nb_pieces, surface, prix=None):
     locals=get_locals(adresse_du_bien)
 
@@ -623,9 +683,9 @@ def generate_description(adresse_du_bien, type_bien, type_transaction, nb_pieces
 
 
     response_gpt = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="o3-mini",
         messages=messages,
-     temperature=0.7,
+     temperature=1,
         stream=True  # Active le streaming
     )
 
