@@ -376,7 +376,7 @@ def extract_structured_data(user_query):
                     """
                 }
             ],
-            model="gpt-4o",
+            model="gpt-4o-mini",
             temperature=0.1,
         )
 
@@ -423,8 +423,8 @@ def extract_structured_data(user_query):
                 'content': prompt_v1
             }
         ],
-        model="gpt-4o",
-        temperature=0.1,
+        model="o4-mini",
+        # temperature=0.1,
     )
 
     response_content = response.choices[0].message.content
@@ -521,15 +521,15 @@ if st.button("Search"):
                     with st.spinner("Analyse des biens..."):
                         ensemble_annonces = generate_rag_prompt(user_query, filtered_df)
                         prompt = f"""
-                        Au regard de la requête utilisateur :
-                        "{user_query}"
+                            Au regard de la requête utilisateur :
+                            "{user_query}"
 
-                        Il est possible d'évaluer et comparer les annonces suivantes :
-                        {ensemble_annonces}
+                            Il est possible d'évaluer et comparer les annonces suivantes :
+                            {ensemble_annonces}
 
-                        Merci de proposer les meilleures annonces sous forme de **tableau Markdown**, avec :
-                        - Les annonces en **colonnes** (numéro, localisation, surface, prix, etc.),
-                        - Les critères en **lignes** (prix, surface, distance, luminosité, terrasse/balcon, parking, résidence sécurisée, correspondance budget, recommandation finale).
+                            Merci de proposer les meilleures annonces sous forme de **tableau Markdown**, avec :
+                            - Les annonces en **colonnes** (numéro, localisation, surface, prix, etc.),
+                            - Les critères en **lignes** (prix, surface, distance, luminosité, terrasse/balcon, parking, résidence sécurisée, correspondance budget, recommandation finale).
 
                         """
                         messages = [
@@ -542,9 +542,9 @@ if st.button("Search"):
 
                         # --- appel synchrone avec stream=True ---
                         response_stream = client.chat.completions.create(
-                            model="gpt-4o-mini",
+                            model="o4-mini",
                             messages=messages,
-                            temperature=0.1,
+                            # temperature=0.1,
                             stream=True,
                         )
 
