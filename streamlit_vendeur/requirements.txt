@@ -3,6 +3,8 @@ asyncio
 nest-asyncio
 pandas
 numpy
+shapely
+geojson
 geopandas
 scikit-learn
 transformers
