@@ -5,7 +5,10 @@ import plotly.express as px
 import os
 from PIL import Image
 import matplotlib.pyplot as plt
+from pathlib import Path
 
+# Get the directory of the current script
+SCRIPT_DIR = Path(__file__).parent.resolve()
 
 # Streamlit app
 st.title('Générateur de descriptions immobilières')
@@ -48,7 +51,7 @@ if st.button('Générer la description'):
         response_placeholder.markdown(full_response)  # Met à jour l'affichage    
 
     st.markdown("### Images du bien:", unsafe_allow_html=True)    
-    st.image("./galerie_3x3.png",)    
+    st.image(SCRIPT_DIR/"galerie_3x3.png",)    
     
     st.markdown(f'----', unsafe_allow_html=True)
 
